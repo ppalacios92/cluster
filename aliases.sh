@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-CLUSTER_TOOLS="/mnt/deadmanschest/pxpalacios/REPO/cluster/scripts"
+# Get the directory where this aliases.sh file lives
+CLUSTER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLUSTER_TOOLS="$CLUSTER_ROOT/scripts"
 
 alias SOS="$CLUSTER_TOOLS/sos.sh"
 alias tf="$CLUSTER_TOOLS/tf.sh"
