@@ -1,14 +1,25 @@
 #!/usr/bin/env bash
 
-# Get the directory where this aliases.sh file lives
 CLUSTER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLUSTER_TOOLS="$CLUSTER_ROOT/scripts"
 
-alias SOS="$CLUSTER_TOOLS/sos.sh"
-alias tf="$CLUSTER_TOOLS/tf.sh"
-alias extract="$CLUSTER_TOOLS/extract_folder.sh"
-alias compress="$CLUSTER_TOOLS/compress_folder.sh"
-alias diskjob="$CLUSTER_TOOLS/diskjob.sh"
+# alias_name:script_name
+TOOLS=(
+    "SOS:sos.sh"
+    "tf:tf.sh"
+    "extract:extract_folder.sh"
+    "compress:compress_folder.sh"
+    "diskjob:diskjob.sh"
+)
+
+# Create normal aliases and ladruno_ aliases
+for item in "${TOOLS[@]}"; do
+    name="${item%%:*}"
+    script="${item##*:}"
+
+    alias "$name=$CLUSTER_TOOLS/$script"
+    alias "ladruno_$name=$CLUSTER_TOOLS/$script"
+done
 
 gotojob() {
     if [ -z "$1" ]; then
@@ -32,4 +43,8 @@ gotojob() {
 
     echo "📍 cd $workdir"
     cd "$workdir" || return 1
+}
+
+ladruno_gotojob() {
+    gotojob "$@"
 }
