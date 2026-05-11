@@ -3,6 +3,15 @@
 CLUSTER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLUSTER_TOOLS="$CLUSTER_ROOT/scripts"
 
+get_ladruno() {
+    "$CLUSTER_TOOLS/get_ladruno.sh"
+}
+
+_ladruno_run() {
+    get_ladruno
+    "$@"
+}
+
 # alias_name:script_name
 TOOLS=(
     "SOS:sos.sh"
@@ -18,7 +27,7 @@ for item in "${TOOLS[@]}"; do
     script="${item##*:}"
 
     alias "$name=$CLUSTER_TOOLS/$script"
-    alias "ladruno_$name=$CLUSTER_TOOLS/$script"
+    alias "ladruno_$name=_ladruno_run $CLUSTER_TOOLS/$script"
 done
 
 gotojob() {
@@ -46,5 +55,6 @@ gotojob() {
 }
 
 ladruno_gotojob() {
+    get_ladruno
     gotojob "$@"
 }
