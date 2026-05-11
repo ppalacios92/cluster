@@ -24,7 +24,7 @@ banner='
 '
 
 # Frames de animación
-for frame in {0..10}; do
+for frame in {0..15}; do
     clear
 
     i=0

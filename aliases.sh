@@ -7,11 +7,6 @@ get_ladruno() {
     "$CLUSTER_TOOLS/get_ladruno.sh"
 }
 
-_ladruno_run() {
-    get_ladruno
-    "$@"
-}
-
 # alias_name:script_name
 TOOLS=(
     "SOS:sos.sh"
@@ -22,12 +17,14 @@ TOOLS=(
 )
 
 # Create normal aliases and ladruno_ aliases
+# Both execute the script directly.
+# No banner here.
 for item in "${TOOLS[@]}"; do
     name="${item%%:*}"
     script="${item##*:}"
 
     alias "$name=$CLUSTER_TOOLS/$script"
-    alias "ladruno_$name=_ladruno_run $CLUSTER_TOOLS/$script"
+    alias "ladruno_$name=$CLUSTER_TOOLS/$script"
 done
 
 gotojob() {
@@ -55,6 +52,5 @@ gotojob() {
 }
 
 ladruno_gotojob() {
-    get_ladruno
     gotojob "$@"
 }
