@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-
 CLUSTER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ---------------------------------------------------------
 CLUSTER_TOOLS="$CLUSTER_ROOT/scripts"
 
 get_ladruno() {
@@ -15,9 +15,6 @@ TOOLS=(
     "compress:compress_folder.sh"
     "diskjob:diskjob.sh"
     "sw4run:sw4run.sh"
-    "cluster_status:cluster_status.sh"
-    "quick_ram:quick_ram.sh"
-    "watch_cluster:watch_cluster.sh"
 )
 
 # Create normal aliases and ladruno_ aliases
@@ -29,7 +26,23 @@ for item in "${TOOLS[@]}"; do
     alias "$name=$CLUSTER_TOOLS/$script"
     alias "ladruno_$name=$CLUSTER_TOOLS/$script"
 done
+# ---------------------------------------------------------
+# QA / monitoring tools (separate folder)
+CLUSTER_QA="$CLUSTER_ROOT/qa"
 
+QA_TOOLS=(
+    "cluster_status:cluster_status.sh"
+    "quick_ram:quick_ram.sh"
+    "watch_cluster:watch_cluster.sh"
+)
+
+for item in "${QA_TOOLS[@]}"; do
+    name="${item%%:*}"
+    script="${item##*:}"
+    alias "$name=$CLUSTER_QA/$script"
+    alias "ladruno_$name=$CLUSTER_QA/$script"
+done
+# ---------------------------------------------------------
 gotojob() {
     if [ -z "$1" ]; then
         echo "Usage: gotojob <jobid>"
