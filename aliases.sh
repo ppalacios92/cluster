@@ -14,6 +14,7 @@ TOOLS=(
     "extract:extract_folder.sh"
     "compress:compress_folder.sh"
     "diskjob:diskjob.sh"
+    "sw4run:sw4run.sh"
 )
 
 # Create normal aliases and ladruno_ aliases
