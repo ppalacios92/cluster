@@ -67,6 +67,8 @@ All monitoring commands run as a regular user. They rely on Slurm
 | `cluster_status help` | Show built-in help |
 | `quick_ram` | One-line RAM summary per node (reserved vs really used) |
 | `watch_cluster [N]` | Live monitor refreshing every `N` seconds (default 5) |
+| `nodes` | Nodes in use per partition and per user: distinct nodes, running and pending jobs, nodes requested by pending jobs; your user is marked with `*` |
+| `nodes -v` | Same, plus your running jobs |
 
 All commands above also have a `ladruno_` prefixed version (e.g.
 `ladruno_cluster_status`, `ladruno_quick_ram`, `ladruno_watch_cluster`).
