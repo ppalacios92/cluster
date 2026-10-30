@@ -18,32 +18,44 @@ POLL=20
 
 mkdir -p "$(dirname "$REGISTRY")"; touch "$REGISTRY"
 
-# remember job -> stdout of every job of the user that Slurm still knows
+# remember job -> stdout of every job of the user that Slurm still knows. The multi-line output
+# of scontrol (one job per paragraph) keeps StdOut on a line of its own, so paths with spaces
+# stay whole; for each job only the longest path is kept (drops entries cut at a space).
 record_jobs() {
-    scontrol -o show job 2>/dev/null | awk -v u="$USER" '
-        $0 ~ "UserId="u"\\(" {
+    scontrol show job 2>/dev/null | awk -v u="$USER" 'BEGIN { RS = ""; FS = "\n" }
+        $0 ~ "UserId=" u "\\(" {
             id = ""; out = ""
             for (i = 1; i <= NF; i++) {
-                if ($i ~ /^JobId=/)  id  = substr($i, 7)
-                if ($i ~ /^StdOut=/) out = substr($i, 8)
+                line = $i; sub(/^[ \t]+/, "", line)
+                if (line ~ /^JobId=/)  { id = substr(line, 7); sub(/ .*/, "", id) }
+                if (line ~ /^StdOut=/) out = substr(line, 8)
             }
             if (id != "" && out != "") print id "\t" out
         }' >> "$REGISTRY"
-    sort -u -o "$REGISTRY" "$REGISTRY"
+    awk -F'\t' '{ if (length($2) > length(p[$1])) p[$1] = $2 } END { for (i in p) print i "\t" p[i] }' "$REGISTRY" \
+        | sort -u > "$REGISTRY.tmp" && mv "$REGISTRY.tmp" "$REGISTRY"
 }
 
-# one field of 'scontrol show job' (empty if Slurm no longer knows the job)
+# one field of 'scontrol show job' (empty if Slurm no longer knows the job). Paths may contain
+# spaces, so they are read from the multi-line output, where each one is on a line of its own.
 job_field() {
-    scontrol -o show job "$1" 2>/dev/null | tr ' ' '\n' | awk -v k="$2" 'index($0, k "=") == 1 {print substr($0, length(k) + 2); exit}'
+    case "$2" in
+        StdOut|StdErr|StdIn|WorkDir|Command)
+            scontrol show job "$1" 2>/dev/null | awk -v k="$2" '{ sub(/^[ \t]+/, "") } index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' ;;
+        *)
+            scontrol -o show job "$1" 2>/dev/null | tr ' ' '\n' | awk -v k="$2" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' ;;
+    esac
 }
 
 find_log() {
     local id=$1 log
     log="$(job_field "$id" StdOut)"
-    [ -z "$log" ] && log="$(awk -F'\t' -v id="$id" '$1 == id {print $2}' "$REGISTRY" | tail -1)"
+    # Slurm still knows the job: its StdOut is the answer, even if the file does not exist yet
+    if [ -n "$log" ]; then echo "$log"; return; fi
+    log="$(awk -F'\t' -v id="$id" '$1 == id {print $2}' "$REGISTRY" | tail -1)"
     if [ -z "$log" ] || [ ! -f "$log" ]; then
-        echo "🔎 Slurm no longer knows job $id; searching the disks for its .out (~20 s)..." >&2
-        log="$(find "${SEARCH_ROOTS[@]}" -maxdepth 7 \
+        echo "🔎 Slurm no longer knows job $id; searching the disks for its .out (up to 30 s)..." >&2
+        log="$(timeout 30 find "${SEARCH_ROOTS[@]}" -maxdepth 7 \
                 \( -name greens_functions -o -name out -o -name .git -o -name v_ENV -o -name perf \) -prune -o \
                 -type f \( -name "*-$id.out" -o -name "*_$id.out" -o -name "slurm-$id.out" \) -print 2>/dev/null | head -1)"
         [ -n "$log" ] && printf '%s\t%s\n' "$id" "$log" >> "$REGISTRY"
